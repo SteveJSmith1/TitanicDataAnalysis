@@ -329,12 +329,187 @@ train_df[train_df["Name"].str.contains("Sage,")]
 # parents not included on this list
 
 
-
+# parch 6:
     # 1 parent and 5 children
     # 2 parents and 4 children
 
 
 # Parch 4, this is likely to be someone travelling with:
-    # 4 Children
-    # 
-                        
+    # 4 Children 
+    # 2 parents and 2 children
+    
+#==================================
+# visualising data
+
+g = sns.FacetGrid(train_df, col='Survived')
+g.map(plt.hist, 'Age', bins=20)
+g.savefig("SurvivedAge.PNG", dpi=600)
+
+# Age has distribution features that show it should be considered
+
+# Need to fill NaN with values in age
+
+grid = sns.FacetGrid(train_df, col='Pclass', hue='Survived')
+grid.map(plt.hist, 'Age', alpha=.5, bins=20)
+grid.add_legend()
+grid.savefig("SurvivedPClass1.PNG", dpi=600)
+# shows pclass is a factor, pclass3 definitely shows
+# lower survival rates
+
+grid = sns.FacetGrid(train_df, col="Survived", row='Pclass', size=2, aspect=1.6)
+grid.map(plt.hist, 'Age', alpha=.5, bins=20)
+grid.add_legend()
+grid.savefig("SurvivedPClass.PNG", dpi=600)
+
+# survival in Pclass, sex on embarked
+
+grid = sns.FacetGrid(train_df, row="Embarked", size=2.2, aspect=1.6)
+grid.map(sns.pointplot, 'Pclass', 'Survived', 'Sex', palette='deep')
+grid.add_legend()
+grid.savefig("EmbarkationSurvival.PNG", dpi=600)
+
+# both embarkation and pclass give different survival rates
+
+
+# Fare and Embarkation and survival on Sex
+
+grid = sns.FacetGrid(train_df, row="Embarked", col="Survived", size=2, aspect=1.6)
+grid.map(sns.barplot, 'Sex', 'Fare', alpha=.5, ci=None)
+grid.add_legend()
+grid.savefig("FareEmbarkSurvival.PNG", dpi=600)
+
+
+# Dropping features
+
+# Based on our assumptions, drop cabin and ticket features
+
+# perform operations on both train_df and test_df
+
+print("Before", train_df.shape, test_df.shape, combine[0].shape, combine[1].shape)
+"""
+Before (891, 12) (418, 11) (891, 12) (418, 11)
+"""
+
+train_df = train_df.drop(['Ticket', 'Cabin'], axis=1)
+test_df = test_df.drop(['Ticket', 'Cabin'], axis=1)
+combine = [train_df, test_df]
+
+print("After", train_df.shape, test_df.shape, combine[0].shape, combine[1].shape)
+
+"""
+After (891, 10) (418, 9) (891, 10) (418, 9)
+"""
+
+# Adding new features
+
+# Title in name
+
+for dataset in combine:
+    dataset['Title'] = dataset.Name.str.extract(' ([A-Za-z]+)\.', expand=False)
+    
+pd.crosstab(train_df['Title'], train_df['Sex'])
+"""
+Sex       female  male
+Title                 
+Capt           0     1
+Col            0     2
+Countess       1     0
+Don            0     1
+Dr             1     6
+Jonkheer       0     1
+Lady           1     0
+Major          0     2
+Master         0    40
+Miss         182     0
+Mlle           2     0
+Mme            1     0
+Mr             0   517
+Mrs          125     0
+Ms             1     0
+Rev            0     6
+Sir            0     1
+"""
+
+# replacing titles
+
+for dataset in combine:
+    dataset['Title'] = dataset['Title'].replace(['Lady', 'Countess','Capt', 'Col',\
+ 	'Don', 'Dr', 'Major', 'Rev', 'Sir', 'Jonkheer', 'Dona'], 'Rare')
+
+    dataset['Title'] = dataset['Title'].replace('Mlle', 'Miss')
+    dataset['Title'] = dataset['Title'].replace('Ms', 'Miss')
+    dataset['Title'] = dataset['Title'].replace('Mme', 'Mrs')
+    
+train_df[['Title', 'Survived']].groupby(['Title'], as_index=False).mean()
+
+"""
+    Title  Survived
+0  Master  0.575000
+1    Miss  0.702703
+2      Mr  0.156673
+3     Mrs  0.793651
+4    Rare  0.347826
+"""
+# i.e. women and children first!
+
+# converting the categorical titles to ordinals
+
+title_mapping = {"Mr": 1, "Miss": 2, "Mrs": 3, "Master": 4, "Rare": 5}
+
+for dataset in combine:
+    dataset['Title'] = dataset['Title'].map(title_mapping)
+    dataset['Title'] = dataset['Title'].fillna(0)
+
+train_df.head()
+"""
+   PassengerId  Survived  Pclass  \
+0            1         0       3   
+1            2         1       1   
+2            3         1       3   
+3            4         1       1   
+4            5         0       3   
+
+                                                Name     Sex   Age  SibSp  \
+0                            Braund, Mr. Owen Harris    male  22.0      1   
+1  Cumings, Mrs. John Bradley (Florence Briggs Th...  female  38.0      1   
+2                             Heikkinen, Miss. Laina  female  26.0      0   
+3       Futrelle, Mrs. Jacques Heath (Lily May Peel)  female  35.0      1   
+4                           Allen, Mr. William Henry    male  35.0      0   
+
+   Parch     Fare Embarked  Title  
+0      0   7.2500        S      1  
+1      0  71.2833        C      3  
+2      0   7.9250        S      2  
+3      0  53.1000        S      3  
+4      0   8.0500        S      1  
+"""
+
+# we can drop the name and passenger id
+
+train_df = train_df.drop(['Name', 'PassengerId'], axis=1)
+test_df = test_df.drop(['Name'], axis=1)
+combine = [train_df, test_df]
+train_df.shape, test_df.shape
+
+
+# converting categorical features
+# gender: female = 1, male = 0
+
+for dataset in combine:
+    dataset['Sex'] = dataset['Sex'].map( {'female': 1, 'male': 0} ).astype(int)
+ 
+train_df.head()
+"""
+   Survived  Pclass  Sex   Age  SibSp  Parch     Fare Embarked  Title
+0         0       3    0  22.0      1      0   7.2500        S      1
+1         1       1    1  38.0      1      0  71.2833        C      3
+2         1       3    1  26.0      0      0   7.9250        S      2
+3         1       1    1  35.0      1      0  53.1000        S      3
+4         0       3    0  35.0      0      0   8.0500        S      1
+"""
+
+# filling in the missing values
+
+# More accurate way of guessing missing values is to use other correlated features. In our case we note correlation among Age, Gender, and Pclass. Guess Age values using median values for Age across sets of Pclass and Gender feature combinations. So, median Age for Pclass=1 and Gender=0, Pclass=1 and Gender=1, and so on...
+
+
