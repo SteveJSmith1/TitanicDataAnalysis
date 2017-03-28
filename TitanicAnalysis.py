@@ -6,36 +6,48 @@ Created on Tue Mar 28 10:11:14 2017
 @author: steve
 """
 
+# data analysis and wrangling
+import pandas as pd
+import numpy as np
+import random as rnd
+
+# visualization
+import seaborn as sns
+import matplotlib.pyplot as plt
+%matplotlib inline
+
+# machine learning
+from sklearn.linear_model import LogisticRegression
+from sklearn.svm import SVC, LinearSVC
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.naive_bayes import GaussianNB
+from sklearn.linear_model import Perceptron
+from sklearn.linear_model import SGDClassifier
+from sklearn.tree import DecisionTreeClassifier
+
+# Reading Data
+train_df = pd.read_csv('train.csv')
+test_df = pd.read_csv('test.csv')
+combine = [train_df, test_df]
+
+# Describing data
+
+print(train_df.columns.values)
 """
-Data Dictionary
-
-Variable	Definition	Key
-survival	Survival	0 = No, 1 = Yes
-pclass	Ticket class	1 = 1st, 2 = 2nd, 3 = 3rd
-sex	Sex	
-Age	Age in years	
-sibsp	# of siblings / spouses aboard the Titanic	
-parch	# of parents / children aboard the Titanic	
-ticket	Ticket number	
-fare	Passenger fare	
-cabin	Cabin number	
-embarked	Port of Embarkation	C = Cherbourg, Q = Queenstown, S = Southampton
-Variable Notes
-
-pclass: A proxy for socio-economic status (SES)
-1st = Upper
-2nd = Middle
-3rd = Lower
-
-age: Age is fractional if less than 1. If the age is estimated, is it in the form of xx.5
-
-sibsp: The dataset defines family relations in this way...
-Sibling = brother, sister, stepbrother, stepsister
-Spouse = husband, wife (mistresses and fiancés were ignored)
-
-parch: The dataset defines family relations in this way...
-Parent = mother, father
-Child = daughter, son, stepdaughter, stepson
-Some children travelled only with a nanny, therefore parch=0 for them.
+['PassengerId' 'Survived' 'Pclass' ..., 'Fare' 'Cabin' 'Embarked']
 """
+
+print(test_df.columns.values)
+"""
+['PassengerId' 'Pclass' 'Name' ..., 'Fare' 'Cabin' 'Embarked']
+"""
+
+# Categorical data:
+    
+# Categorical: Survived, Sex, and Embarked. Ordinal: Pclass.
+
+# Numerical data:
+    
+# Continuous: Age, Fare. Discrete: SibSp, Parch.
 
