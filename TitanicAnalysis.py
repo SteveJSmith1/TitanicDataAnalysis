@@ -882,8 +882,196 @@ coeff_df
 8   Age*Class
 """
 
+coeff_df["Correlation"] = pd.Series(logreg.coef_[0])
+
+coeff_df.sort_values(by='Correlation', ascending=False)
+
+"""
+Out[400]: 
+      Feature  Correlation
+1         Sex     2.215671
+5       Title     0.476947
+3        Fare     0.255126
+4    Embarked     0.211899
+8   Age*Class    -0.157424
+2         Age    -0.325558
+7     IsAlone    -0.353892
+6  FamilySize    -0.458992
+0      Pclass    -0.697766
+"""
+
+# Sex: Female very much more likely to survive
+# Having a rare title helps
+# Pclass, the higher the class number the less likely of survivale
+# family size, the greater the family size, the less likely you are to survive
+
+#======
+# Support Vector Machines
+
+svc = SVC()
+
+svc.fit(X_train, Y_train)
+Y_pred = svc.predict(X_test)
+
+acc_svc = round(svc.score(X_train, Y_train)*100,2)
+
+acc_svc
+"""
+Out[405]: 83.840000000000003
+"""
+
+# higher than the LogReg model
+
+#=======
+
+# k-Nearest Neighbours algorithm
+
+knn = KNeighborsClassifier(n_neighbors=3)
+knn.fit(X_train, Y_train)
+Y_pred = knn.predict(X_test)
+acc_knn = round(knn.score(X_train, Y_train)*100, 2)
+acc_knn
+"""
+Out[410]: 84.180000000000007
+"""
+
+# highest of all
+
+#=========
+
+# Gaussain Naive Bayes
+
+gaussian = GaussianNB()
+gaussian.fit(X_train, Y_train)
+Y_pred = gaussian.predict(X_test)
+acc_gaussian = round(gaussian.score(X_train, Y_train)*100, 2)
+acc_gaussian
+"""
+Out[413]: 80.359999999999999
+"""
+
+#===========
+
+## Perceptron
+
+perceptron = Perceptron()
+perceptron.fit(X_train, Y_train)
+Y_pred = perceptron.predict(X_test)
+acc_perceptron = round(perceptron.score(X_train, Y_train)*100, 2)
+acc_perceptron
+
+"""
+Out[414]: 81.140000000000001
+"""
+
+#===========
+
+# Linear SVC
+
+linear_svc = LinearSVC()
+linear_svc.fit(X_train, Y_train)
+Y_pred = linear_svc.predict(X_test)
+acc_linear_svc = round(linear_svc.score(X_train, Y_train)*100, 2)
+acc_linear_svc
+"""
+Out[415]: 81.480000000000004
+"""
+
+#============
+
+# Stochastic Gradient Descent
+
+sgd = SGDClassifier()
+sgd.fit(X_train, Y_train)
+Y_pred = sgd.predict(X_test)
+acc_sgd = round(sgd.score(X_train, Y_train)*100, 2)
+acc_sgd
+"""
+Out[417]: 80.469999999999999
+"""
+
+#============
+
+# Decision Tree
+
+decision_tree = DecisionTreeClassifier()
+decision_tree.fit(X_train, Y_train)
+Y_pred = decision_tree.predict(X_test)
+acc_decision_tree = round(decision_tree.score(X_train, Y_train)*100, 2)
+acc_decision_tree
+"""
+Out[418]: 88.549999999999997
+"""
+
+# Excellent!
+
+#============
+
+# Random Forest
+
+random_forest = RandomForestClassifier(n_estimators=100)
+random_forest.fit(X_train, Y_train)
+Y_pred = random_forest.predict(X_test)
+random_forest.score(X_train, Y_train)
+acc_random_forest = round(random_forest.score(X_train, Y_train)*100, 2)
+acc_random_forest
+
+"""
+Out[420]: 88.549999999999997
+"""
+
+# Same excellent value!
+
+#==========
+
+# Model evaluation
+
+models = pd.DataFrame({
+    'Model': ['Support Vector Machines', 'KNN', 'Logistic Regression', 
+              'Random Forest', 'Naive Bayes', 'Perceptron', 
+              'Stochastic Gradient Decent', 'Linear SVC', 
+              'Decision Tree'],
+    'Score': [acc_svc, acc_knn, acc_log, 
+              acc_random_forest, acc_gaussian, acc_perceptron, 
+              acc_sgd, acc_linear_svc, acc_decision_tree]})
+models.sort_values(by='Score', ascending=False)
+
+"""
+                        Model  Score
+3               Random Forest  88.55
+8               Decision Tree  88.55
+1                         KNN  84.18
+0     Support Vector Machines  83.84
+2         Logistic Regression  81.59
+7                  Linear SVC  81.48
+5                  Perceptron  81.14
+6  Stochastic Gradient Decent  80.47
+4                 Naive Bayes  80.36
+"""
+
+submission = pd.DataFrame({
+        "PassengerId": test_df['PassengerId'],
+        "Survived": Y_pred
+        })
+submission.head()
+          
+"""
+   PassengerId  Survived
+0          892         0
+1          893         0
+2          894         0
+3          895         0
+4          896         0
+"""
+
+submission.tail()
+"""
+     PassengerId  Survived
+413         1305         0
+414         1306         1
+415         1307         0
+416         1308         0
+417         1309         1
+"""
 
 
-
-           
-    
