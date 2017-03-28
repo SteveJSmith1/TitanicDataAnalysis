@@ -512,4 +512,168 @@ train_df.head()
 
 # More accurate way of guessing missing values is to use other correlated features. In our case we note correlation among Age, Gender, and Pclass. Guess Age values using median values for Age across sets of Pclass and Gender feature combinations. So, median Age for Pclass=1 and Gender=0, Pclass=1 and Gender=1, and so on...
 
+grid = sns.FacetGrid(train_df, row='Pclass', col='Sex', size=2.2, aspect=1.6)
+grid.map(plt.hist, 'Age', alpha=.5, bins=20)
+grid.add_legend()
+grid.savefig("AgeClassSex.PNG", dpi=600)
 
+# prepare an empty array to contain guessed Age values based on Pclass/Gender combinations
+
+guess_ages = np.zeros((2,3))
+guess_ages
+
+for dataset in combine:
+    for i in range(0, 2):
+        for j in range(0, 3):
+            guess_df = dataset[(dataset['Sex'] == i) & \
+                                  (dataset['Pclass'] == j+1)]['Age'].dropna()
+
+            # age_mean = guess_df.mean()
+            # age_std = guess_df.std()
+            # age_guess = rnd.uniform(age_mean - age_std, age_mean + age_std)
+
+            age_guess = guess_df.median()
+
+            # Convert random age float to nearest .5 age
+            guess_ages[i,j] = int( age_guess/0.5 + 0.5 ) * 0.5
+            
+    for i in range(0, 2):
+        for j in range(0, 3):
+            dataset.loc[ (dataset.Age.isnull()) & (dataset.Sex == i) & (dataset.Pclass == j+1),\
+                    'Age'] = guess_ages[i,j]
+
+    dataset['Age'] = dataset['Age'].astype(int)
+
+train_df.head()
+"""
+   Survived  Pclass  Sex  Age  SibSp  Parch     Fare Embarked  Title
+0         0       3    0   22      1      0   7.2500        S      1
+1         1       1    1   38      1      0  71.2833        C      3
+2         1       3    1   26      0      0   7.9250        S      2
+3         1       1    1   35      1      0  53.1000        S      3
+4         0       3    0   35      0      0   8.0500        S      1
+"""
+
+guess_ages
+""" 
+array([[ 42.,  28.,  24.],
+       [ 41.,  24.,  22.]])
+"""
+
+# Creating age bands
+
+train_df['AgeBand'] = pd.cut(train_df['Age'],5)
+train_df[['AgeBand', 'Survived']].groupby(['AgeBand'], as_index=False).mean().sort_values(by='AgeBand', ascending=True)
+
+"""
+       AgeBand  Survived
+0  (-0.08, 16]  0.550000
+1     (16, 32]  0.337374
+2     (32, 48]  0.412037
+3     (48, 64]  0.434783
+4     (64, 80]  0.090909
+"""
+
+# replacing Age with ordinals
+
+for dataset in combine:    
+    dataset.loc[ dataset['Age'] <= 16, 'Age'] = 0
+    dataset.loc[(dataset['Age'] > 16) & (dataset['Age'] <= 32), 'Age'] = 1
+    dataset.loc[(dataset['Age'] > 32) & (dataset['Age'] <= 48), 'Age'] = 2
+    dataset.loc[(dataset['Age'] > 48) & (dataset['Age'] <= 64), 'Age'] = 3
+    dataset.loc[ dataset['Age'] > 64, 'Age'] = 4
+train_df.head()
+
+"""
+   Survived  Pclass  Sex  Age  SibSp  Parch     Fare Embarked  Title   AgeBand
+0         0       3    0    1      1      0   7.2500        S      1  (16, 32]
+1         1       1    1    2      1      0  71.2833        C      3  (32, 48]
+2         1       3    1    1      0      0   7.9250        S      2  (16, 32]
+3         1       1    1    2      1      0  53.1000        S      3  (32, 48]
+4         0       3    0    2      0      0   8.0500        S      1  (32, 48]
+"""
+
+
+"""
+    Survived  Pclass  Sex  Age  SibSp  Parch     Fare Embarked  Title
+0         0       3    0    1      1      0   7.2500        S      1
+1         1       1    1    2      1      0  71.2833        C      3
+2         1       3    1    1      0      0   7.9250        S      2
+3         1       1    1    2      1      0  53.1000        S      3
+4         0       3    0    2      0      0   8.0500        S      1
+"""
+
+# creating a new feature, familysize which combines parch and sibsp
+
+for dataset in combine:
+    dataset['FamilySize'] = dataset['SibSp'] + dataset['Parch'] + 1
+
+
+train_df[['FamilySize', 'Survived']].groupby(['FamilySize'], as_index=False).mean().sort_values(by='Survived', ascending=False)
+    
+"""
+   FamilySize  Survived
+3           4  0.724138
+2           3  0.578431
+1           2  0.552795
+6           7  0.333333
+0           1  0.303538
+4           5  0.200000
+5           6  0.136364
+7           8  0.000000
+8          11  0.000000
+"""
+# Removing the AgeBand feature
+
+train_df = train_df.drop(['AgeBand'], axis=1)
+
+train_df.head()
+# we can use this data to create an 'IsAlone' feature
+
+for dataset in combine:
+    dataset['IsAlone'] = 0
+    dataset.loc[dataset['FamilySize'] == 1, 'IsAlone'] = 1
+
+
+train_df[['IsAlone', 'Survived']].groupby(['IsAlone'], as_index=False).mean()
+
+"""
+   IsAlone  Survived
+0        0  0.505650
+1        1  0.303538
+"""
+
+# let us drop Parch and SibSp
+
+train_df = train_df.drop(['Parch', 'SibSp'], axis=1)
+test_df = test_df.drop(['Parch', 'SibSp'], axis=1)
+combine = [train_df, test_df]
+
+train_df.head()
+
+"""
+   Survived  Pclass  Sex  Age     Fare Embarked  Title   AgeBand  FamilySize  \
+0         0       3    0    0   7.2500        S      1  (16, 32]           2   
+1         1       1    1    0  71.2833        C      3  (32, 48]           2   
+2         1       3    1    0   7.9250        S      2  (16, 32]           1   
+3         1       1    1    0  53.1000        S      3  (32, 48]           2   
+4         0       3    0    0   8.0500        S      1  (32, 48]           1   
+
+   IsAlone  
+0        0  
+1        0  
+2        1  
+3        0  
+4        1  
+"""
+
+# creating artificial feature combining Pclass and Age.
+
+for dataset in combine:
+    dataset['Age*Class'] = dataset.Age*dataset.Pclass
+  
+train_df.loc[:, ['Age*Class', 'Age', 'Pclass']].head(10)
+
+         
+           
+    
