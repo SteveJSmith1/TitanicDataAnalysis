@@ -670,10 +670,220 @@ train_df.head()
 # creating artificial feature combining Pclass and Age.
 
 for dataset in combine:
-    dataset['Age*Class'] = dataset.Age*dataset.Pclass
+    dataset['Age*Class'] = dataset.Age * dataset.Pclass
   
 train_df.loc[:, ['Age*Class', 'Age', 'Pclass']].head(10)
 
-         
+"""
+   Age*Class  Age  Pclass
+0          3    1       3
+1          2    2       1
+2          3    1       3
+3          2    2       1
+4          6    2       3
+5          3    1       3
+6          3    3       1
+7          0    0       3
+8          3    1       3
+9          0    0       2
+"""
+
+# Filling the two missing values for embarkation
+
+freq_port = train_df.Embarked.dropna().mode()[0]
+freq_port
+"""
+Out[369]: 'S'
+"""
+# this seems reasonable, similar fares eminate from this port
+
+for dataset in combine:
+    dataset['Embarked'] = dataset['Embarked'].fillna(freq_port)
+
+train_df[['Embarked', 'Survived']].groupby(['Embarked'], as_index=False).mean().sort_values(by='Survived', ascending=False)
+
+"""
+  Embarked  Survived
+0        C  0.553571
+1        Q  0.389610
+2        S  0.339009
+"""
+
+# converting categorical to numeric
+
+for dataset in combine:
+    dataset['Embarked'] = dataset['Embarked'].map( {'S': 0, 'C':1, 'Q':2}).astype(int)
+
+train_df.head()
+"""
+   Survived  Pclass  Sex  Age     Fare  Embarked  Title  FamilySize  IsAlone  \
+0         0       3    0    1   7.2500         0      1           2        0   
+1         1       1    1    2  71.2833         1      3           2        0   
+2         1       3    1    1   7.9250         0      2           1        1   
+3         1       1    1    2  53.1000         0      3           2        0   
+4         0       3    0    2   8.0500         0      1           1        1   
+
+   Age*Class  
+0          3  
+1          2  
+2          3  
+3          2  
+4          6  
+"""
+
+# replacing the single missing fare value with the median
+
+test_df['Fare'].fillna(test_df['Fare'].dropna().median(), inplace=True)
+
+# creating a fare band.
+
+train_df['FareBand'] = pd.qcut(train_df['Fare'], 4)
+train_df[['FareBand', 'Survived']].groupby(['FareBand'], as_index=False).mean().sort_values(by='FareBand', ascending=True)
+
+"""
+        FareBand  Survived
+0       [0, 7.91]  0.197309
+1  (7.91, 14.454]  0.303571
+2    (14.454, 31]  0.454955
+3   (31, 512.329]  0.581081
+"""
+# convert the far feature to ordinal values based on the fare band
+
+for dataset in combine:
+    dataset.loc[ dataset['Fare'] <= 7.91, 'Fare'] = 0
+    dataset.loc[(dataset['Fare'] > 7.91) & (dataset['Fare'] <= 14.454), 'Fare'] = 1
+    dataset.loc[(dataset['Fare'] > 14.454) & (dataset['Fare'] <= 31), 'Fare']   = 2
+    dataset.loc[ dataset['Fare'] > 31, 'Fare'] = 3
+    dataset['Fare'] = dataset['Fare'].astype(int)
+
+train_df = train_df.drop(['FareBand'], axis=1)
+combine = [train_df, test_df]
+
+train_df.head(10)
+"""
+   Survived  Pclass  Sex  Age  Fare  Embarked  Title  FamilySize  IsAlone  \
+0         0       3    0    1     0         0      1           2        0   
+1         1       1    1    2     3         1      3           2        0   
+2         1       3    1    1     1         0      2           1        1   
+3         1       1    1    2     3         0      3           2        0   
+4         0       3    0    2     1         0      1           1        1   
+5         0       3    0    1     1         2      1           1        1   
+6         0       1    0    3     3         0      1           1        1   
+7         0       3    0    0     2         0      4           5        0   
+8         1       3    1    1     1         0      3           3        0   
+9         1       2    1    0     2         1      3           2        0   
+
+   Age*Class  
+0          3  
+1          2  
+2          3  
+3          2  
+4          6  
+5          3  
+6          3  
+7          0  
+8          3  
+9          0  
+"""
+
+test_df.head()
+"""
+   PassengerId  Pclass  Sex  Age  Fare  Embarked  Title  FamilySize  IsAlone  \
+0          892       3    0    2     0         2      1           1        1   
+1          893       3    1    2     0         0      3           2        0   
+2          894       2    0    3     1         2      1           1        1   
+3          895       3    0    1     1         0      1           1        1   
+4          896       3    1    1     1         0      3           3        0   
+
+   Age*Class  
+0          6  
+1          6  
+2          6  
+3          3  
+4          3
+"""
+
+# Modelling:
+    
+    # Identify relationship between 
+    # output: survived
+    # input: other variables
+    # problem is a classification and regression problem
+    
+    # Training model with given dataset
+    # - Supervised Machine Learning
+
+# suitable models
+
+"""
+Logistic Regression
+KNN or k-Nearest Neighbors
+Support Vector Machines
+Naive Bayes classifier
+Decision Tree
+Random Forrest
+Perceptron
+Artificial neural network
+RVM or Relevance Vector Machine
+"""
+
+# split the data
+
+X_train = train_df.drop("Survived", axis=1)
+Y_train = train_df["Survived"]
+
+X_test = test_df.drop("PassengerId", axis=1).copy()
+
+X_train.shape, Y_train.shape, X_test.shape
+"""
+Out[386]: ((891, 9), (891,), (418, 9))
+"""
+
+# Logistic Regression
+
+logreg = LogisticRegression()
+
+logreg.fit(X_train, Y_train)
+
+Y_pred = logreg.predict(X_test)
+
+acc_log = round(logreg.score(X_train, Y_train)*100, 2)
+acc_log
+"""
+Out[393]: 81.590000000000003
+"""
+
+coeff_df = pd.DataFrame(train_df.columns.delete(0))
+"""
+            0
+0      Pclass
+1         Sex
+2         Age
+3        Fare
+4    Embarked
+5       Title
+6  FamilySize
+7     IsAlone
+8   Age*Class
+"""
+
+coeff_df.columns = ['Feature']
+coeff_df
+"""
+      Feature
+0      Pclass
+1         Sex
+2         Age
+3        Fare
+4    Embarked
+5       Title
+6  FamilySize
+7     IsAlone
+8   Age*Class
+"""
+
+
+
+
            
     
