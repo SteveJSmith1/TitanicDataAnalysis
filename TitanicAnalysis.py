@@ -207,5 +207,134 @@ max      6.000000  512.329200
                             
 # correlating
 
+train_df[['Pclass', 'Survived']].groupby(['Pclass'], as_index=False).mean().sort_values(by='Survived', ascending=False)
 
+"""
+Out[192]: 
+   Pclass  Survived
+0       1  0.629630
+1       2  0.472826
+2       3  0.242363
+"""
+
+# Looks promising
+
+train_df[['Sex', 'Survived']].groupby(['Sex'], as_index=False).mean().sort_values(by='Survived', ascending=False)
+
+"""
+Out[194]: 
+      Sex  Survived
+0  female  0.742038
+1    male  0.188908
+"""
+
+# again, looks promising
+
+train_df[["SibSp", "Survived"]].groupby(['SibSp'], as_index=False).mean().sort_values(by='Survived', ascending=False)
+
+"""
+Out[195]: 
+   SibSp  Survived
+1      1  0.535885
+2      2  0.464286
+0      0  0.345395
+3      3  0.250000
+4      4  0.166667
+5      5  0.000000
+6      8  0.000000
+"""
+
+# one or two siblings look promising, no survivors if 5 or 8 siblings/spouses
+
+train_df[["Parch", "Survived"]].groupby(['Parch'], as_index=False).mean().sort_values(by='Survived', ascending=False)
+
+"""
+   Parch  Survived
+3      3  0.600000
+1      1  0.550847
+2      2  0.500000
+0      0  0.343658
+5      5  0.200000
+4      4  0.000000
+6      6  0.000000
+"""
+
+# consider the family tree
+# Parch is vertical
+# Sibsp is horizontal
+
+# Consider Parch 6, this is likely to be someone travelling with:
+    # 6 children - this equates to SibSp = 5 for each child need to find how many SibSp = 6
+
+train_df["SibSp"].value_counts()
+"""
+Out[197]: 
+0    608
+1    209
+2     28
+4     18
+3     16
+8      7
+5      5
+Name: SibSp, dtype: int64
+"""
+# This shows that sSibSp = 5 are the children of one family, all of which died 
+# SibSp = 8 has a return of 7. This means there was one family, 1 member had a spouse and 7 siblings, the seven siblings had no spouse. They all died.
+# As there is no ParCh 7, these travelled with no parents. They could well have had children. 
+
+train_df[train_df["SibSp"] == 8]
+"""
+     PassengerId  Survived  Pclass                               Name     Sex  \
+159          160         0       3         Sage, Master. Thomas Henry    male   
+180          181         0       3       Sage, Miss. Constance Gladys  female   
+201          202         0       3                Sage, Mr. Frederick    male   
+324          325         0       3           Sage, Mr. George John Jr    male   
+792          793         0       3            Sage, Miss. Stella Anna  female   
+846          847         0       3           Sage, Mr. Douglas Bullen    male   
+863          864         0       3  Sage, Miss. Dorothy Edith "Dolly"  female   
+
+     Age  SibSp  Parch    Ticket   Fare Cabin Embarked  
+159  NaN      8      2  CA. 2343  69.55   NaN        S  
+180  NaN      8      2  CA. 2343  69.55   NaN        S  
+201  NaN      8      2  CA. 2343  69.55   NaN        S  
+324  NaN      8      2  CA. 2343  69.55   NaN        S  
+792  NaN      8      2  CA. 2343  69.55   NaN        S  
+846  NaN      8      2  CA. 2343  69.55   NaN        S  
+863  NaN      8      2  CA. 2343  69.55   NaN        S  
+"""
+
+# They all have the same surname, they all travelled with two parents, did they die too?
+
+train_df[train_df["Name"].str.contains("Sage,")]
+"""
+     PassengerId  Survived  Pclass                               Name     Sex  \
+159          160         0       3         Sage, Master. Thomas Henry    male   
+180          181         0       3       Sage, Miss. Constance Gladys  female   
+201          202         0       3                Sage, Mr. Frederick    male   
+324          325         0       3           Sage, Mr. George John Jr    male   
+792          793         0       3            Sage, Miss. Stella Anna  female   
+846          847         0       3           Sage, Mr. Douglas Bullen    male   
+863          864         0       3  Sage, Miss. Dorothy Edith "Dolly"  female   
+
+     Age  SibSp  Parch    Ticket   Fare Cabin Embarked  
+159  NaN      8      2  CA. 2343  69.55   NaN        S  
+180  NaN      8      2  CA. 2343  69.55   NaN        S  
+201  NaN      8      2  CA. 2343  69.55   NaN        S  
+324  NaN      8      2  CA. 2343  69.55   NaN        S  
+792  NaN      8      2  CA. 2343  69.55   NaN        S  
+846  NaN      8      2  CA. 2343  69.55   NaN        S  
+863  NaN      8      2  CA. 2343  69.55   NaN        S  
+"""
+
+# parents not included on this list
+
+
+
+    # 1 parent and 5 children
+    # 2 parents and 4 children
+
+
+# Parch 4, this is likely to be someone travelling with:
+    # 4 Children
+    # 
                         
